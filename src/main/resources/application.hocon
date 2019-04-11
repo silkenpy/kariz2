@@ -1,0 +1,48 @@
+kafka{
+     topic = "kariz"
+     consumer{
+         "bootstrap.servers" = ["localhost:9092"]
+         "group.id" = test6
+         "enable.auto.commit"= false
+       //  "auto.offset.reset" = latest
+         "max.poll.records" = 50000
+
+     }
+     producer{
+         "bootstrap.servers" = ["localhost:9092"]
+         "acks" = "1"
+         "compression.type" = lz4
+         "batch.size" = 1024000
+         "client.id" = ali
+         "linger.ms" = 50
+         "delivery.timeout.ms" = 5000
+         "max.block.ms" = 4000
+         "request.timeout.ms" = 3000
+     }
+}
+check.url.rateLimit = 500000
+check.tag.rateLimit = 1
+check.usr.rateLimit = 1
+
+kariz {
+    ip = 0.0.0.0
+    forcedTtl = -1
+    port = 36379
+}
+
+redis{
+   host = localhost
+   port = 6379
+   database = 0
+   password = ""
+
+}
+
+router = "https://rt.tgcnl.com/"
+
+jetty{
+    ip = 0.0.0.0
+    port = 4040
+    threadNumMin = 7
+    threadNumMax = 64
+}
