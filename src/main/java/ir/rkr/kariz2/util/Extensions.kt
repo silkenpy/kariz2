@@ -1,4 +1,4 @@
-package ir.rkr.kariz.util
+package ir.rkr.kariz2.util
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken

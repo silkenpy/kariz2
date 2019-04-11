@@ -1,4 +1,4 @@
-package ir.rkr.kariz.netty
+package ir.rkr.kariz2.netty
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -17,10 +17,9 @@ import io.netty.channel.epoll.EpollSocketChannel
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
 import io.netty.util.CharsetUtil
-import ir.rkr.kariz.caffeine.CaffeineBuilder
-import ir.rkr.kariz.kafka.KafkaConnector
-import ir.rkr.kariz.redis.RedisConnector
-import ir.rkr.kariz.util.KarizMetrics
+import ir.rkr.kariz2.kafka.KafkaConnector
+import ir.rkr.kariz2.redis.RedisConnector
+import ir.rkr.kariz2.util.KarizMetrics
 import mu.KotlinLogging
 import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit
@@ -30,7 +29,7 @@ fun String.redisRequestParser(): List<String> = this.split("\r\n").filterIndexed
 
 data class Command(val cmd: String, val key: String, val value: String? = null, val ttl: Long? = null, val time: Long)
 
-class RedisFeeder(val kafka: KafkaConnector, val caffeineCache: RedisConnector, val config: Config, val karizMetrics: KarizMetrics) : ChannelInboundHandlerAdapter() {
+class RedisFeeder(val kafka: KafkaConnector, val redis: RedisConnector, val config: Config, val karizMetrics: KarizMetrics) : ChannelInboundHandlerAdapter() {
 
     private val logger = KotlinLogging.logger {}
     private val gson = GsonBuilder().disableHtmlEscaping().create()
@@ -46,7 +45,7 @@ class RedisFeeder(val kafka: KafkaConnector, val caffeineCache: RedisConnector, 
     private fun redisHandler(request: String): String {
 
         val parts = request.redisRequestParser()
-        val forcedTtl = config.getInt("kariz.forcedTtl")
+        val forcedTtl = config.getInt("kariz2.forcedTtl")
         karizMetrics.MarkNettyRequests(1)
 
         var command: String = ""
@@ -85,7 +84,7 @@ class RedisFeeder(val kafka: KafkaConnector, val caffeineCache: RedisConnector, 
 
 
                 "get" -> {
-                    val value = caffeineCache.get(parts[2])
+                    val value = redis.get(parts[2])
                     return if (value.isPresent)
                         "\$${value.get().length}\r\n${value.get()}\r\n"
                     else
@@ -119,7 +118,7 @@ class RedisFeeder(val kafka: KafkaConnector, val caffeineCache: RedisConnector, 
                         var values = ""
 
                         for (i in 2..(parts.size - 1)) {
-                            val value = caffeineCache.get(parts[i])
+                            val value = redis.get(parts[i])
                             if (value.isPresent) {
                                 values += "\$${value.get().length}\r\n${value.get()}\r\n"
 
@@ -262,7 +261,7 @@ class NettyServer(val kafka: KafkaConnector, val caffeineCache: RedisConnector, 
 
         val serverBootstrap = ServerBootstrap().group(parent, child)
         serverBootstrap.channel(EpollServerSocketChannel::class.java)
-        serverBootstrap.localAddress(InetSocketAddress(config.getString("kariz.ip"), config.getInt("kariz.port")))
+        serverBootstrap.localAddress(InetSocketAddress(config.getString("kariz2.ip"), config.getInt("kariz2.port")))
 
         serverBootstrap.option(EpollChannelOption.TCP_NODELAY, true)
         serverBootstrap.option(EpollChannelOption.AUTO_READ, true)

@@ -5,29 +5,27 @@ kafka{
          "group.id" = test6
          "enable.auto.commit"= false
        //  "auto.offset.reset" = latest
-         "max.poll.records" = 50000
+         "max.poll.records" = 20000
+         "session.timeout.ms" = 20000
 
      }
      producer{
          "bootstrap.servers" = ["localhost:9092"]
          "acks" = "1"
          "compression.type" = lz4
-         "batch.size" = 1024000
+         "batch.size" = 102400
          "client.id" = ali
-         "linger.ms" = 50
-         "delivery.timeout.ms" = 5000
+         "linger.ms" = 100
+         "delivery.timeout.ms" = 50000
          "max.block.ms" = 4000
-         "request.timeout.ms" = 3000
+         "request.timeout.ms" = 30000
      }
 }
-check.url.rateLimit = 500000
-check.tag.rateLimit = 1
-check.usr.rateLimit = 1
 
-kariz {
-    ip = 0.0.0.0
+kariz2 {
+     port = 36379
     forcedTtl = -1
-    port = 36379
+    ip = 0.0.0.0
 }
 
 redis{
@@ -35,14 +33,18 @@ redis{
    port = 6379
    database = 0
    password = ""
+   feederNum = 6
+   timeout = 800}
 
-}
-
-router = "https://rt.tgcnl.com/"
+router = "https://router/"
 
 jetty{
     ip = 0.0.0.0
     port = 4040
     threadNumMin = 7
-    threadNumMax = 64
+    threadNumMax = 32
 }
+
+check.url.rateLimit = 500000
+check.tag.rateLimit = 1
+check.usr.rateLimit = 1

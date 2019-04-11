@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ali.abri</groupId>
-    <artifactId>kariz</artifactId>
+    <artifactId>kariz2</artifactId>
     <version>0.1</version>
 
     <properties>
         <kotlin.version>1.2.40</kotlin.version>
-        <main.class>ir.rkr.kariz.MainKt</main.class>
+        <main.class>ir.rkr.kariz2.MainKt</main.class>
     </properties>
     <dependencies>
         <dependency>

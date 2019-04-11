@@ -1,8 +1,8 @@
-package ir.rkr.kariz.kafka
+package ir.rkr.kariz2.kafka
 
 
 import com.typesafe.config.Config
-import ir.rkr.kariz.util.KarizMetrics
+import ir.rkr.kariz2.util.KarizMetrics
 import mu.KotlinLogging
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.Callback

@@ -1,12 +1,11 @@
-package ir.rkr.kariz.rest
+package ir.rkr.kariz2.rest
 
 import com.google.common.util.concurrent.RateLimiter
 import com.google.gson.GsonBuilder
 import com.typesafe.config.Config
-import ir.rkr.kariz.caffeine.CaffeineBuilder
-import ir.rkr.kariz.redis.RedisConnector
-import ir.rkr.kariz.util.KarizMetrics
-import ir.rkr.kariz.util.fromJson
+import ir.rkr.kariz2.redis.RedisConnector
+import ir.rkr.kariz2.util.KarizMetrics
+import ir.rkr.kariz2.util.fromJson
 import org.eclipse.jetty.http.HttpStatus
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.ServerConnector
@@ -29,7 +28,7 @@ import javax.servlet.http.HttpServletResponse
  */
 data class Results(var results: HashMap<String, String> = HashMap<String, String>())
 
-class JettyRestServer(val caffeine: RedisConnector, val config: Config, val karizMetrics: KarizMetrics) : HttpServlet() {
+class JettyRestServer(val Redis: RedisConnector, val config: Config, val karizMetrics: KarizMetrics) : HttpServlet() {
 
     private val gson = GsonBuilder().disableHtmlEscaping().create()
     private val urlRateLimiter = RateLimiter.create(config.getDouble("check.url.rateLimit"))
@@ -47,15 +46,15 @@ class JettyRestServer(val caffeine: RedisConnector, val config: Config, val kari
 
         if (!urlRateLimiter.tryAcquire()) return ""
 
-        val value = caffeine.get(key)
+        val value = Redis.get(key)
 
         return if (value.isPresent) {
-            karizMetrics.MarkUrlInCaffeine(1)
+            karizMetrics.MarkUrlInRedis(1)
             value.get()
 
         } else {
 
-            karizMetrics.MarkUrlNotInCaffeine(1)
+            karizMetrics.MarkUrlNotInRedis(1)
             ""
         }
     }
@@ -72,15 +71,15 @@ class JettyRestServer(val caffeine: RedisConnector, val config: Config, val kari
 
         if (!tagRateLimiter.tryAcquire()) return ""
 
-        val value = caffeine.get(key)
+        val value = Redis.get(key)
 
         return if (value.isPresent) {
-            karizMetrics.MarkTagInCaffeine(1)
+            karizMetrics.MarkTagInRedis(1)
             value.get()
 
         } else {
 
-            karizMetrics.MarkTagNotInCaffeine(1)
+            karizMetrics.MarkTagNotInRedis(1)
             ""
         }
     }
@@ -94,15 +93,15 @@ class JettyRestServer(val caffeine: RedisConnector, val config: Config, val kari
 
         if (!usrRateLimiter.tryAcquire()) return "0"
 
-        val value = caffeine.get(key)
+        val value = Redis.get(key)
 
         return if (value.isPresent) {
-            karizMetrics.MarkUsrInCaffeine(1)
+            karizMetrics.MarkUsrInRedis(1)
             value.get()
 
         } else {
 
-            karizMetrics.MarkUsrNotInCaffeine(1)
+            karizMetrics.MarkUsrNotInRedis(1)
             "0"
         }
     }
@@ -132,14 +131,14 @@ class JettyRestServer(val caffeine: RedisConnector, val config: Config, val kari
                 val parsedJson = gson.fromJson<Array<String>>(req.reader.readText())
 
                 karizMetrics.MarkUrlBatches(1)
-                caffeine.mget(parsedJson.toList()).forEach { k, v ->
+                Redis.mget(parsedJson.toList()).forEach { k, v ->
                     if (!k.isNullOrBlank())
                         if (v.isPresent){
-                            karizMetrics.MarkUrlInCaffeine(1)
+                            karizMetrics.MarkUrlInRedis(1)
                             msg.results[k] = config.getString("router")+v.get()
                         }
                         else{
-                            karizMetrics.MarkUrlNotInCaffeine(1)
+                            karizMetrics.MarkUrlNotInRedis(1)
                            msg.results[k]= ""
                         }
                 }
