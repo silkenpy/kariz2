@@ -9,7 +9,6 @@ import ir.rkr.kariz2.util.randomItem
 import mu.KotlinLogging
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig
 import redis.clients.jedis.JedisPool
-import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -36,7 +35,7 @@ class RedisConnector(config: Config, val karizMetrics: KarizMetrics) {
 
         val host = config.getString("redis.host")
         val port = config.getInt("redis.port")
-        val feederNum = config.getInt("redis.feederNum")
+        val feederNum = config.getInt("redis.feederNum") - 1
         val redisTimeout = config.getInt("redis.timeout")
 
         var password: String? = null
@@ -44,21 +43,16 @@ class RedisConnector(config: Config, val karizMetrics: KarizMetrics) {
         if (config.hasPath("password")) password = config.getString("redis.password")
         val database = config.getInt("redis.database")
 
-        redisPoolList.add(JedisPool(jedisCfg, host, port, redisTimeout, password, database))
-        redisPoolList.add(JedisPool(jedisCfg, host, port, redisTimeout, password, database))
-        redisPoolList.add(JedisPool(jedisCfg, host, port, redisTimeout, password, database))
-        redisPoolList.add(JedisPool(jedisCfg, host, port, redisTimeout, password, database))
-        redisPoolList.add(JedisPool(jedisCfg, host, port, redisTimeout, password, database))
+        for (i in 0..feederNum)
+            redisPoolList.add(JedisPool(jedisCfg, host, port, redisTimeout, password, database))
 
-        val hostName = InetAddress.getLocalHost().hostName
-        val group = "${hostName}${System.currentTimeMillis()}"
-
-        for (i in 1..feederNum) {
-            kafkaList.add(KafkaConnector(config.getString("kafka.topic"), config, karizMetrics, group))
+        for (i in 0..feederNum) {
+            println("kkakakakakakakakak $i")
+            kafkaList.add(KafkaConnector(config.getString("kafka.topic"), config, karizMetrics, "$i"))
             Thread.sleep(10)
         }
 
-        for (i in 1..feederNum)
+        for (i in 0..feederNum)
             Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay({
 
                 val kafka = kafkaList.get(i)
@@ -67,27 +61,37 @@ class RedisConnector(config: Config, val karizMetrics: KarizMetrics) {
 
                 if (commands.size > 0) {
                     val setCommands = ArrayList<String>()
-                    commands.forEach { t, u ->
+                    commands.forEach { _, u ->
 
-                        val parsed = gson.fromJson(u, Command::class.java)
-                        when (parsed.cmd) {
+                        val parsed = gson.fromJson(u, Command::class.java);
+                        while (
+                                !when (parsed.cmd) {
 
-                            "set" -> {
-                                setCommands.add(parsed.key)
-                                setCommands.add(parsed.value!!)
-                            }
+                                    "set" -> {
+                                        setCommands.add(parsed.key)
+                                        setCommands.add(parsed.value!!)
+                                        true
+                                    }
 
-                            "del" -> del(parsed.key)
+                                    "del" -> {
+                                        del(parsed.key)
 
-                            "expire" -> expire(parsed.key, parsed.ttl)
+                                    }
 
-                            else -> {
-                                logger.error { parsed.toString() }
-                            }
+                                    "expire" -> expire(parsed.key, parsed.ttl)
+
+                                    else -> {
+                                        logger.error { parsed.toString() }
+                                        true
+                                    }
+                                }) {
+                            Thread.sleep(500)
                         }
                     }
 
-                    mset(setCommands)
+                    while (!mset(setCommands)) {
+                        Thread.sleep(500)
+                    }
                     kafka.commit()
                 }
             }, 0, 100, TimeUnit.MILLISECONDS)
@@ -175,7 +179,7 @@ class RedisConnector(config: Config, val karizMetrics: KarizMetrics) {
 
     fun mset(keyValues: List<String>): Boolean {
 
-        val kvSize = keyValues.size.toLong()/2
+        val kvSize = keyValues.size.toLong() / 2
 
         karizMetrics.MarkRedisSetCall(kvSize)
 

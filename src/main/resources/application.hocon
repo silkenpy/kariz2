@@ -2,10 +2,11 @@ kafka{
      topic = "kariz"
      consumer{
          "bootstrap.servers" = ["localhost:9092"]
-         "group.id" = test6
+         "group.id" = krz0413
          "enable.auto.commit"= false
-       //  "auto.offset.reset" = latest
-         "max.poll.records" = 20000
+        // "auto.offset.reset" = latest
+         "auto.offset.reset" = earliest
+         "max.poll.records" = 10000
          "session.timeout.ms" = 20000
 
      }
@@ -26,6 +27,7 @@ kariz2 {
      port = 36379
     forcedTtl = -1
     ip = 0.0.0.0
+    threads = 8
 }
 
 redis{
@@ -34,7 +36,8 @@ redis{
    database = 0
    password = ""
    feederNum = 6
-   timeout = 800}
+   timeout = 800
+}
 
 router = "https://router/"
 

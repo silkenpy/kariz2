@@ -67,6 +67,7 @@ class KarizMetrics {
 
     fun MarkNettyRequests(l: Long = 1) = NettyRequests.mark(l)
 
+    fun MarkKafkaGetCall(l: Long = 1) = KafkaGetCall.mark(l)
     fun MarkKafkaGetFail(l: Long = 1) = KafkaGetFail.mark(l)
     fun MarkKafkaGetRecords(l: Long = 1) = KafkaGetRecords.mark(l)
     fun MarkKafkaGetDuplicate(l: Long = 1) = KafkaGetDuplicate.mark(l)

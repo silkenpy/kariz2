@@ -24,14 +24,12 @@ fun main(args: Array<String>) {
     val config = ConfigFactory.defaultApplication()
     val karizMetrics = KarizMetrics()
 
-    val kafkaGroup = "${InetAddress.getLocalHost().hostName}${System.currentTimeMillis()}"
-    val kafka = KafkaConnector(config.getString("kafka.topic"), config, karizMetrics,kafkaGroup)
+    val kafka = KafkaConnector(config.getString("kafka.topic"), config, karizMetrics,"default")
     val redis = RedisConnector( config, karizMetrics)
 
     NettyServer(kafka, redis, config, karizMetrics)
     JettyRestServer(redis, config,karizMetrics)
 
     logger.info { "Kariz V$version is ready :D" }
-
 
 }

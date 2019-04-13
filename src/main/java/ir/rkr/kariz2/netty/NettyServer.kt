@@ -240,8 +240,8 @@ class RedisFeeder(val kafka: KafkaConnector, val redis: RedisConnector, val conf
 
         if (command.isNotEmpty()) {
             ctx.writeAndFlush(Unpooled.copiedBuffer(redisHandler(command), CharsetUtil.US_ASCII))
+            ctx.close()
         }
-//        ctx.close()
     }
 
     @Throws(Exception::class)
@@ -256,8 +256,10 @@ class NettyServer(val kafka: KafkaConnector, val caffeineCache: RedisConnector, 
 
     init {
 
-        val parent = EpollEventLoopGroup(40).apply { setIoRatio(70) }
-        val child = EpollEventLoopGroup(40).apply { setIoRatio(70) }
+        val threadNum = config.getInt("kariz2.threads")
+
+        val parent = EpollEventLoopGroup(threadNum).apply { setIoRatio(70) }
+        val child  = EpollEventLoopGroup(threadNum).apply { setIoRatio(70) }
 
         val serverBootstrap = ServerBootstrap().group(parent, child)
         serverBootstrap.channel(EpollServerSocketChannel::class.java)
@@ -283,7 +285,6 @@ class NettyServer(val kafka: KafkaConnector, val caffeineCache: RedisConnector, 
 
                 pipeline.addLast("readTimeoutHandler", ReadTimeoutHandler(3000))
                 pipeline.addLast("writeTimeoutHandler", WriteTimeoutHandler(3000))
-
                 pipeline.addLast(RedisFeeder(kafka, caffeineCache, config, karizMetrics))
             }
         })

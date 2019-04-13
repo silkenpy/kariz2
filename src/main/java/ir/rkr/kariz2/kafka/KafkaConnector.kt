@@ -15,7 +15,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 
-class KafkaConnector(val topicName: String, config: Config, val karizMetrics: KarizMetrics,val group:String) {
+class KafkaConnector(val topicName: String, config: Config, val karizMetrics: KarizMetrics, clientId: String) {
 
     val consumer: KafkaConsumer<ByteArray, ByteArray>
     val producer: KafkaProducer<ByteArray, ByteArray>
@@ -36,18 +36,21 @@ class KafkaConnector(val topicName: String, config: Config, val karizMetrics: Ka
         config.getObject("kafka.consumer").forEach({ x, y -> println("kafka config $x --> $y"); consumerCfg.put(x, y.unwrapped()) })
         consumerCfg.put("key.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
         consumerCfg.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer")
-        consumerCfg.put("group.id", "${group}")
-        consumerCfg.put("client.id", "${group}${System.currentTimeMillis()}")
-        consumerCfg.put("auto.offset.reset", "earliest")
+
+        val groupId = config.getObject("kafka.consumer").get("group.id")?.unwrapped()
+        consumerCfg.put("group.id", "$hostName-$groupId" )
+        consumerCfg.put("client.id", "$hostName-$groupId-$clientId")
+//        consumerCfg.put("auto.offset.reset", "earliest")
         consumerCfg.put("enable.auto.commit", "false")
         consumer = KafkaConsumer(consumerCfg)
+
 
         Thread.sleep(100)
     }
 
     fun get(): HashMap<String, String> {
 
-//        karizMetrics.MarkKafkaGetCall(1)
+        karizMetrics.MarkKafkaGetCall(1)
 
         val msg = HashMap<String, String>()
 
@@ -57,7 +60,7 @@ class KafkaConnector(val topicName: String, config: Config, val karizMetrics: Ka
             val res = consumer.poll(Duration.ofMillis(700))
             karizMetrics.MarkKafkaGetRecords(res.count().toLong())
             res.records(topicName).forEach { it -> msg[String(it.key())] = String(it.value()) }
-            karizMetrics.MarkKafkaGetDuplicate(res.count().toLong()- msg.size.toLong())
+            karizMetrics.MarkKafkaGetDuplicate(res.count().toLong() - msg.size.toLong())
             msg
 
         } catch (e: java.lang.Exception) {
