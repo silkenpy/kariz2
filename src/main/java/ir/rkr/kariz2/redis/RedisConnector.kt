@@ -40,14 +40,13 @@ class RedisConnector(config: Config, val karizMetrics: KarizMetrics) {
 
         var password: String? = null
 
-        if (config.hasPath("password")) password = config.getString("redis.password")
+        if (config.hasPath("redis.password")) password = config.getString("redis.password")
         val database = config.getInt("redis.database")
 
         for (i in 0..feederNum)
             redisPoolList.add(JedisPool(jedisCfg, host, port, redisTimeout, password, database))
 
         for (i in 0..feederNum) {
-            println("kkakakakakakakakak $i")
             kafkaList.add(KafkaConnector(config.getString("kafka.topic"), config, karizMetrics, "$i"))
             Thread.sleep(10)
         }
@@ -75,7 +74,6 @@ class RedisConnector(config: Config, val karizMetrics: KarizMetrics) {
 
                                     "del" -> {
                                         del(parsed.key)
-
                                     }
 
                                     "expire" -> expire(parsed.key, parsed.ttl)

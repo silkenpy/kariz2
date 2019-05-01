@@ -8,7 +8,6 @@ import ir.rkr.kariz2.redis.RedisConnector
 import ir.rkr.kariz2.rest.JettyRestServer
 import ir.rkr.kariz2.util.KarizMetrics
 import mu.KotlinLogging
-import java.net.InetAddress
 
 
 const val version = 0.1
@@ -31,5 +30,4 @@ fun main(args: Array<String>) {
     JettyRestServer(redis, config,karizMetrics)
 
     logger.info { "Kariz V$version is ready :D" }
-
 }

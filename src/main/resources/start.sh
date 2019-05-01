@@ -3,7 +3,7 @@
 HOME=`pwd`
 PID_FILE="/tmp/rkr-kariz2.pid"
 
-HEAP="-Xmx10g"
+HEAP="-Xmx15g"
 
 CONF_FILE="-Dconfig.file=${HOME}/application.hocon"
 LOG4J_FILE="-Dlog4j2.configurationFile=${HOME}/log4j2.xml"
@@ -16,7 +16,7 @@ if [[ ! -f ${JAR_FILE} ]];then
    exit
 fi
 
-/opt/kariz/redis-server &
+#/opt/kariz/redis-server &
 
 java ${CONF_FILE} ${LOG4J_FILE} ${HEAP} -XX:+UseConcMarkSweepGC -jar ${JAR_FILE}
 
