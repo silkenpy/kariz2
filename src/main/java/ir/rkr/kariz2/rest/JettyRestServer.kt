@@ -110,7 +110,7 @@ class JettyRestServer(val Redis: RedisConnector, val config: Config, val karizMe
      * Start a jetty server.
      */
     init {
-        val threadPool = QueuedThreadPool( config.getInt("jetty.threadNumMin"),  config.getInt("jetty.threadNumMax"))
+        val threadPool = QueuedThreadPool(config.getInt("jetty.threadNumMax"),config.getInt("jetty.threadNumMin"))
         val server = Server(threadPool)
         val http = ServerConnector(server).apply {
             host = config.getString("jetty.ip")
